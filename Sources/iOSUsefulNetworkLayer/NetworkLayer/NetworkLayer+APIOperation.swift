@@ -75,7 +75,7 @@ extension NetworkLayer {
     }
     
     /// Defines available request types.
-    enum RequestType: String {
+    public enum RequestType: String {
         /// get type request
         case get = "GET"
         /// post type request

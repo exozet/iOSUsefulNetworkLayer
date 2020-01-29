@@ -16,7 +16,7 @@ public extension NetworkLayer {
         var expirationDate: Date?
         
         /// Initialize the object with empty value.
-        init() {
+        public init() {
             self.expirationDate = nil
         }
         
@@ -24,7 +24,7 @@ public extension NetworkLayer {
          Initializes the timeobject to be cached up to specified time passed.
          - parameter seconds: Time represented by the seconds.
          */
-        init(seconds: Double) {
+        public init(seconds: Double) {
             self.expirationDate = Date().addingTimeInterval(TimeInterval(exactly: seconds)!)
         }
         
@@ -32,7 +32,7 @@ public extension NetworkLayer {
          Initializes the timeobject to be cached up to specified date.
          - parameter expirationDate: The `Date` object.
          */
-        init(until expirationDate: Date) {
+        public init(until expirationDate: Date) {
             self.expirationDate = expirationDate
         }
     }

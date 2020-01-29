@@ -48,7 +48,7 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
      - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
      Then specified custom caching will be applied for that request.
      */
-    init?(hostURL: String, endPoint: String,
+    public init?(hostURL: String, endPoint: String,
           requestType: NetworkLayer.RequestType = .get,
           headers: [String:String]? = nil,
           body: [String:Any]? = nil,
@@ -81,7 +81,7 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
      - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
      Then specified custom caching will be applied for that request.
      */
-    init(url: URL,
+    public init(url: URL,
          requestType: NetworkLayer.RequestType = .get,
          headers: [String:String]? = nil,
          body: [String:Any]? = nil,
