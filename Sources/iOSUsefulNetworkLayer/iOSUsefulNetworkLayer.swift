@@ -1,3 +1,3 @@
 struct iOSUsefulNetworkLayer {
-    var text = "Hello, World!"
+    var text = "Hello, iOSUsefulNetworkLayer!"
 }
