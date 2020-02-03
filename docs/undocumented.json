@@ -1,6 +1,12 @@
 {
   "warnings": [
-
+    {
+      "file": "/Users/burak.uzunboy/Projects/Personal/iOSUsefulSDK/iOSUsefulNetworkLayer/Sources/iOSUsefulNetworkLayer/NetworkLayer/NetworkLayer.swift",
+      "line": 50,
+      "symbol": "NetworkLayer.urlSession",
+      "symbol_kind": "source.lang.swift.decl.var.class",
+      "warning": "undocumented"
+    }
   ],
   "source_directory": "/Users/burak.uzunboy/Projects/Personal/iOSUsefulSDK/iOSUsefulNetworkLayer"
 }
