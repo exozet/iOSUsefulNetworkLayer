@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 import Foundation
+import iOSCoreUsefulSDK
 
 /**
  Base Network Layer that capable to cache and manage the operation queue.
@@ -41,8 +42,18 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
     
     // MARK: - Properties
     
+    /// Holds cache of the `NetworkLayer`.
+    public class var cache: Cache? {
+        get { return NetworkLayer.shared._cache }
+    }
+    
+    public class var urlSession: URLSession {
+        get { return NetworkLayer.shared._urlSession }
+        set { NetworkLayer.shared._urlSession = newValue }
+    }
+    
     /// Singleton instance for the `NetworkLayer`.
-    public static let shared = NetworkLayer()
+    private static let shared = NetworkLayer()
     
     /// Operations marked as main are being handled by this queue.
     var mainQueue: OperationQueue {
@@ -59,14 +70,9 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
             self.backgroundQueue.qualityOfService = .default
             self.backgroundQueue.name = "\(Bundle.main.bundleIdentifier!).backgroundQueue"
         }}
-    
-    /// Block that holds log message, level and caller function.
-    public typealias LogListenerBlock = (_ message: String, _ func: String, _ level: LogType)->()
-    /// Holds listener for the logs created by the `NetworkLayer`.
-    private var logListener: LogListenerBlock?
-    
+        
     /// Holds cache of the `NetworkLayer`.
-    var cache: Cache? {
+    public var _cache: Cache? {
         get {
             return NetworkLayer.Cache(memoryCapacity: 0,
                                       diskCapacity: 150 * 1024 * 1024,
@@ -75,7 +81,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
     }
     
     /// `URLSession` manager for the `NetworkLayer`.
-    var urlSession: URLSession!
+    public var _urlSession: URLSession!
     
     /// Private initializer
     private override init() {
@@ -85,9 +91,9 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         
         let conf = URLSessionConfiguration.default
         conf.requestCachePolicy = .reloadIgnoringCacheData
-        conf.urlCache = self.cache
+        conf.urlCache = self._cache
         
-        self.urlSession = URLSession.init(configuration: conf,
+        self._urlSession = URLSession.init(configuration: conf,
                                           delegate: self,
                                           delegateQueue: nil)
     }
@@ -106,11 +112,12 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
      - parameter error: Returns reason of the error if operation fails. `nil` otherwise
      - parameter response: Returns response with the specified type of response
      */
-    public func execute<T>(_ request: APIConfiguration<T>, completion: @escaping (Result<T>)->()) where T:ResponseBodyParsable {
-        DispatchQueue.global().async { [unowned self] in
+    public class func execute<T>(_ request: APIConfiguration<T>, completion: @escaping (Result<T>)->()) where T:ResponseBodyParsable {
+        let instance = NetworkLayer.shared
+        DispatchQueue.global().async {
             guard let urlRequest = request.request else {
                 let err = NSError(domain: "", code: 500, description: "Cannot create URL Request with specified configurations")
-                self.sendLog(message: err.localizedDescription, logType: .error(code: 900, name: err.localizedDescription))
+                instance.sendLog(message: err.localizedDescription, logType: .error(code: 900, name: err.localizedDescription))
                 DispatchQueue.main.async {
                     completion(.error(err))
                 }
@@ -122,20 +129,20 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
             var operation: APIOperation!
             var task: URLSessionDataTask!
             
-            task = self.urlSession.dataTask(with: urlRequest) { [unowned self](data, response, error) in
+            task = instance._urlSession.dataTask(with: urlRequest) { (data, response, error) in
                 guard operation != nil else { return }
                 
-                self.sendLog(message: "Data Task for Operation ID: \(operation.identifier) is completed - URL: \(urlRequest.url?.absoluteString ?? "nil")")
+                instance.sendLog(message: "Data Task for Operation ID: \(operation.identifier) is completed - URL: \(urlRequest.url?.absoluteString ?? "nil")")
                 operation.isFinished = true
                 var dataResult = data
                 var loadedResponse = response
                 
                 if let error = error {
-                    if let oldCacheObject = self.cache?.cachedResponseWithForce(for: urlRequest) {
+                    if let oldCacheObject = instance._cache?.cachedResponseWithForce(for: urlRequest) {
                         dataResult = oldCacheObject.data
                         loadedResponse = oldCacheObject.response
                     } else {
-                        self.sendLog(message: "Operation:\(operation.identifier) failed with error: \(error.localizedDescription)", logType: .error(code: (error as NSError).code, name: error.localizedDescription))
+                        instance.sendLog(message: "Operation:\(operation.identifier) failed with error: \(error.localizedDescription)", logType: .error(code: (error as NSError).code, name: error.localizedDescription))
                         DispatchQueue.main.async {
                             completion(.error(error as NSError))
                         }
@@ -143,7 +150,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                     }
                 }
                 
-                self.cache?.changeCacheExpiry(for: task, to: request.cachingTime.expirationDate ?? Date())
+                instance._cache?.changeCacheExpiry(for: task, to: request.cachingTime.expirationDate ?? Date())
                 
                 guard let data = dataResult, let loadResponse = loadedResponse else {
                     let err = NSError(domain: "", code: 500, description: "Data is empty - Operation: \(operation.identifier)")
@@ -153,14 +160,14 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                     return
                 }
                 
-                self.proceedResponse(response: loadResponse, data: data, operationId: operation.identifier, request: request, completion: completion)
+                instance.proceedResponse(response: loadResponse, data: data, operationId: operation.identifier, request: request, completion: completion)
             }
             
-            self.cache?.getCachedResponse(for: task, completionHandler: { (response) in
+            instance._cache?.getCachedResponse(for: task, completionHandler: { (response) in
                 if let response = response {
                     // found in the cache, proceed
-                    self.sendLog(message: "Operation with ID: \(id) is gathered from the cache - Caching ends: \(response.userInfo?["cachingEndsAt"] ?? "Nil")")
-                    self.proceedResponse(response: response.response,
+                    instance.sendLog(message: "Operation with ID: \(id) is gathered from the cache - Caching ends: \(response.userInfo?["cachingEndsAt"] ?? "Nil")")
+                    instance.proceedResponse(response: response.response,
                                          data: response.data,
                                          operationId: id,
                                          request: request,
@@ -168,15 +175,15 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                     task.cancel()
                 } else {
                     operation = request.operation(with: task, id: id)
-                    self.sendLog(message: "Operation with ID: \(operation.identifier) is created - URL: \(request.requestURL)")
-                    operation.layerDelegate = self
-                    request.isMainOperation ? self.mainQueue.addOperation(operation) : self.backgroundQueue.addOperation(operation)
+                    instance.sendLog(message: "Operation with ID: \(operation.identifier) is created - URL: \(request.requestURL)")
+                    operation.layerDelegate = instance
+                    request.isMainOperation ? instance.mainQueue.addOperation(operation) : instance.backgroundQueue.addOperation(operation)
                     
-                    operation.completionBlock = { [unowned self] in
-                        self.sendLog(message: "Operation with ID: \(operation.identifier) is completed")
+                    operation.completionBlock = {
+                        instance.sendLog(message: "Operation with ID: \(operation.identifier) is completed")
                     }
                     
-                    self.sendLog(message: "Operation with ID: \(operation.identifier) is added to queue - isMainQueue: \(request.isMainOperation)")
+                    instance.sendLog(message: "Operation with ID: \(operation.identifier) is added to queue - isMainQueue: \(request.isMainOperation)")
                 }
             })
         }
@@ -191,7 +198,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         if let dataObject = request.responseBodyObject.init(data) {
             self.sendLog(message: "Data Object created from Operation: \(operationId) - Object: \(dataObject.typeName)")
             if request.autoCache, let cacheTiming = dataObject.cachingEndsAt() {
-                self.cache?.changeCacheExpiry(for: request.request!, to: cacheTiming)
+                self._cache?.changeCacheExpiry(for: request.request!, to: cacheTiming)
             }
             DispatchQueue.main.async {
                 completion(.success(dataObject))
@@ -204,7 +211,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
             if let responseObject = request.responseBodyObject.init(json) {
                 self.sendLog(message: "Response Object Created from JSON Data with Operation: \(operationId) - Object: \(responseObject.typeName)")
                 if request.autoCache, let cacheTiming = responseObject.cachingEndsAt() {
-                    self.cache?.changeCacheExpiry(for: request.request!, to: cacheTiming)
+                    self._cache?.changeCacheExpiry(for: request.request!, to: cacheTiming)
                 }
                 DispatchQueue.main.async {
                     completion(.success(responseObject))
@@ -225,16 +232,6 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         }
     }
     
-    /**
-     Sets listener for the log messages coming from the `NetworkLayer`.
-     - parameter listener: Listener Block
-     - parameter message: Message of the log
-     - parameter func: Function who creates the log
-     */
-    public func setLogListener(_ listener: @escaping LogListenerBlock) {
-        self.logListener = listener
-    }
-    
     // MARK: Private Methods
     
     /**
@@ -243,11 +240,16 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
      - parameter function: Caller of the log
      */
     internal func sendLog(message: String, function: String = #function, logType: LogType = .info) {
-        self.logListener?(message, function, logType)
+        switch logType {
+        case .info:
+            LoggingManager.info(message: message, domain: .service, function: function)
+        case .error(code: let code, name: let name):
+            LoggingManager.error(message: message, domain: .service, function: function, tracking: (code, name))
+        }
     }
     
     /// Two log type is currently possible. Info or error with the code and name.
-    public enum LogType {
+    internal enum LogType {
         /// Default log type for the network layer
         case info
         /// Logs with the code and name of the error

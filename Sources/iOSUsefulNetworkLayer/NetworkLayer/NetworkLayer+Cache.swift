@@ -28,7 +28,7 @@ import UIKit
 extension NetworkLayer {
     
     /// Custom Caching class.
-    class Cache: URLCache {
+    public class Cache: URLCache {
         
         /// Default initializer.
         override init() {
@@ -111,7 +111,7 @@ extension NetworkLayer {
         }
         
         /// Checks the response and acts accordingly.
-        override func cachedResponse(for request: URLRequest) -> CachedURLResponse? {
+        override public func cachedResponse(for request: URLRequest) -> CachedURLResponse? {
             let cachedResponse = super.cachedResponse(for: request)
             let retVal = self.checkCachedResponse(cachedResponse)
             if retVal != nil {
@@ -127,12 +127,12 @@ extension NetworkLayer {
         }
         
         /// Calls the super class.
-        override func removeCachedResponses(since date: Date) {
+        override public func removeCachedResponses(since date: Date) {
             super.removeCachedResponses(since: date)
         }
         
         /// Checks the response and acts accordingly
-        override func getCachedResponse(for dataTask: URLSessionDataTask, completionHandler: @escaping (CachedURLResponse?) -> Void) {
+        override public func getCachedResponse(for dataTask: URLSessionDataTask, completionHandler: @escaping (CachedURLResponse?) -> Void) {
             super.getCachedResponse(for: dataTask) { (cachedResponse) in
                 if let response = self.checkCachedResponse(cachedResponse) {
                     completionHandler(response)
@@ -143,27 +143,27 @@ extension NetworkLayer {
         }
         
         /// Calls the super class.
-        override func removeCachedResponse(for request: URLRequest) {
+        override public func removeCachedResponse(for request: URLRequest) {
             super.removeCachedResponse(for: request)
         }
         
         /// Calls the super class.
-        override func removeCachedResponse(for dataTask: URLSessionDataTask) {
+        override public func removeCachedResponse(for dataTask: URLSessionDataTask) {
             super.removeCachedResponse(for: dataTask)
         }
         
         /// Calls the super class.
-        override func storeCachedResponse(_ cachedResponse: CachedURLResponse, for request: URLRequest) {
+        override public func storeCachedResponse(_ cachedResponse: CachedURLResponse, for request: URLRequest) {
             super.storeCachedResponse(cachedResponse, for: request)
         }
         
         /// Calls the super class.
-        override func storeCachedResponse(_ cachedResponse: CachedURLResponse, for dataTask: URLSessionDataTask) {
+        override public func storeCachedResponse(_ cachedResponse: CachedURLResponse, for dataTask: URLSessionDataTask) {
             super.storeCachedResponse(cachedResponse, for: dataTask)
         }
         
         /// Calls the super class.
-        override func removeAllCachedResponses() {
+        override public func removeAllCachedResponses() {
             super.removeAllCachedResponses()
         }
         
