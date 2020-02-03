@@ -2,7 +2,7 @@
   "warnings": [
     {
       "file": "/Users/burak.uzunboy/Projects/Personal/iOSUsefulSDK/iOSUsefulNetworkLayer/Sources/iOSUsefulNetworkLayer/NetworkLayer/NetworkLayer.swift",
-      "line": 50,
+      "line": 51,
       "symbol": "NetworkLayer.urlSession",
       "symbol_kind": "source.lang.swift.decl.var.class",
       "warning": "undocumented"
