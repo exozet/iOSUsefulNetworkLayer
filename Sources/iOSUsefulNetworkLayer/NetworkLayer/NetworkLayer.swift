@@ -21,7 +21,6 @@
 // THE SOFTWARE.
 
 import Foundation
-import UIKit
 
 /**
  Base Network Layer that capable to cache and manage the operation queue.

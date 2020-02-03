@@ -20,7 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+import Foundation
+#if !os(macOS) && !os(watchOS)
 import UIKit
+#endif
 
 extension NetworkLayer {
     
@@ -46,10 +49,12 @@ extension NetworkLayer {
         
         /// Registers `NotificationCenter` for necessary messages.
         private func initialize() {
+            #if !os(macOS) && !os(watchOS)
             NotificationCenter.default.addObserver(self,
                                                    selector: #selector(didReceiveMemoryWarning),
                                                    name: UIApplication.didReceiveMemoryWarningNotification,
                                                    object: nil)
+            #endif
         }
         
         /// Remove observer from the `NotificationCenter`
