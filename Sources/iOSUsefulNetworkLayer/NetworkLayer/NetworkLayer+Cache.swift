@@ -25,10 +25,10 @@ import Foundation
 import UIKit
 #endif
 
-extension NetworkLayer {
+public extension NetworkLayer {
     
     /// Custom Caching class.
-    public class Cache: URLCache {
+    class Cache: URLCache {
         
         /// Default initializer.
         override init() {

@@ -26,10 +26,10 @@ final class iOSUsefulNetworkLayerTests: XCTestCase {
             return
         }
         
-        NetworkLayer.execute(apiReq) { (result) in
+        apiReq.request { (result) in
             switch result {
             case .error(let err):
-                XCTFail("Error: \(err.localizedDescription)")
+                XCTFail("Error: \(err.error.localizedDescription)")
                 break
             case .success(_):
                 exp.fulfill()

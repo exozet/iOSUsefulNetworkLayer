@@ -35,10 +35,11 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
      */
     public enum Result<T> where T: ResponseBodyParsable {
         /// Returns response.
-        case success(T)
+        case success(APIResponse<T>)
         /// Returns reason of the error.
-        case error(NSError)
+        case error(APIError<T>)
     }
+
     
     // MARK: - Properties
     
@@ -103,7 +104,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         NotificationCenter.default.removeObserver(self)
     }
     
-    // MARK: Public Methods
+    // MARK: Internal Methods
     
     /**
      Executes configured API.
@@ -112,14 +113,14 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
      - parameter error: Returns reason of the error if operation fails. `nil` otherwise
      - parameter response: Returns response with the specified type of response
      */
-    public class func execute<T>(_ request: APIConfiguration<T>, completion: @escaping (Result<T>)->()) where T:ResponseBodyParsable {
+    internal class func execute<T>(_ request: APIConfiguration<T>, completion: @escaping (Result<T>)->()) where T:ResponseBodyParsable {
         let instance = NetworkLayer.shared
         DispatchQueue.global().async {
             guard let urlRequest = request.request else {
                 let err = NSError(domain: "", code: 500, description: "Cannot create URL Request with specified configurations")
                 instance.sendLog(message: err.localizedDescription, logType: .error(code: 900, name: err.localizedDescription))
                 DispatchQueue.main.async {
-                    completion(.error(err))
+                    completion(.error(APIError(request: request, error: err)))
                 }
                 return
             }
@@ -144,7 +145,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                     } else {
                         instance.sendLog(message: "Operation:\(operation.identifier) failed with error: \(error.localizedDescription)", logType: .error(code: (error as NSError).code, name: error.localizedDescription))
                         DispatchQueue.main.async {
-                            completion(.error(error as NSError))
+                            completion(.error(.init(request: request, error: error as NSError)))
                         }
                         return
                     }
@@ -155,7 +156,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                 guard let data = dataResult, let loadResponse = loadedResponse else {
                     let err = NSError(domain: "", code: 500, description: "Data is empty - Operation: \(operation.identifier)")
                     DispatchQueue.main.async {
-                        completion(.error(err))
+                        completion(.error(.init(request: request, error: err)))
                     }
                     return
                 }
@@ -189,6 +190,8 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         }
     }
     
+    // MARK: Private Methods
+    
     /// Proceeds the response and completes.
     private func proceedResponse<T>(response: URLResponse, data: Data,
                                     operationId: Int,
@@ -201,7 +204,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                 self._cache?.changeCacheExpiry(for: request.request!, to: cacheTiming)
             }
             DispatchQueue.main.async {
-                completion(.success(dataObject))
+                completion(.success(APIResponse(response: response, responseBody: dataObject)))
             }
             return
         }
@@ -214,12 +217,12 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                     self._cache?.changeCacheExpiry(for: request.request!, to: cacheTiming)
                 }
                 DispatchQueue.main.async {
-                    completion(.success(responseObject))
+                    completion(.success(APIResponse(response: response, responseBody: responseObject)))
                 }
             } else {
                 DispatchQueue.main.async {
                     let err = NSError(domain: "", code: 500, description: "Cannot create response body - Operation: \(operationId)")
-                    completion(.error(err))
+                    completion(.error(.init(request: request, error: err)))
                 }
             }
         } catch {
@@ -227,13 +230,11 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                 logType: .error(code: 900, name: error.localizedDescription))
             DispatchQueue.main.async {
                 let err = NSError(domain: "", code: 500, description: error.localizedDescription)
-                completion(.error(err))
+                completion(.error(.init(request: request, error: err)))
             }
         }
     }
-    
-    // MARK: Private Methods
-    
+        
     /**
      Sends logs to listener. Shouldn't be called outside of the `NetworkLayer`.
      - parameter message: Log message

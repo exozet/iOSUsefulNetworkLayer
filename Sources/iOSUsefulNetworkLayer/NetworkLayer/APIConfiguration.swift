@@ -26,34 +26,34 @@ import iOSCoreUsefulSDK
 /// Structure that keeps all information needed from Network Layer for operations.
 public struct APIConfiguration<T> where T: ResponseBodyParsable {
     /// Returns `URL` of the API request.
-    var requestURL: URL
+    public var requestURL: URL
     
     /// Type of the API request.
-    var requestType: NetworkLayer.RequestType
+    public var requestType: NetworkLayer.RequestType
     
     /// Headers for the API request.
-    var headers: [String:String]?
+    public var headers: [String:String]?
     
     /// Request body for the API request.
-    var body: [String:Any]?
+    public var body: [String:Any]?
     
     /// The expected object type from the request.
-    var responseBodyObject: T.Type
+    public var responseBodyObject: T.Type
     
     /// `NetworkLayer` priorities the API request by looking that parameter.
-    var priority: Operation.QueuePriority
+    public var priority: Operation.QueuePriority
     
     /// The desired expiration time for the API request.
-    var cachingTime: NetworkLayer.CachingTime
+    public var cachingTime: NetworkLayer.CachingTime
     
     /// `NetworkLayer` adds desired queue by looking that parameter.
-    var isMainOperation: Bool
+    public var isMainOperation: Bool
     
     /// If `true`, the response will be cached by specified `cachingEndsAt` parameter of the response object.
-    var autoCache: Bool
+    public var autoCache: Bool
     
     /// The timeout value for the request wait time.
-    var timeOut: Int
+    public var timeOut: Int
     
     /**
      Initializes Configuration with the host URL and endpoint separately.
@@ -155,6 +155,13 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
         return operation
     }
     
+    /// Requests given API configuration by using `NetworkLayer`.
+    /// - Parameter completion: Completion block which contains error or success case.
+    /// - Parameter response: Response `Enum` which has two cases, whether `error` or `success`.
+    public func request(completion: @escaping (_ response: NetworkLayer.Result<T>)->()) {
+        NetworkLayer.execute(self, completion: completion)
+    }
+    
 }
 
 /**
@@ -202,4 +209,37 @@ open class ResponseBodyParsable: NSObject, NSDiscardableContent {
     public func cachingEndsAt() -> Date? {
         return nil
     }
+}
+
+
+/// Response of the API if request is completed successfully.
+public struct APIResponse<T> where T: ResponseBodyParsable {
+    
+    /// Response body of the API request.
+    public private(set) var responseBody: T
+    
+    /// Main URL response of the API request.
+    public private(set) var response: URLResponse
+    
+    internal init(response: URLResponse, responseBody: T) {
+        self.response = response
+        self.responseBody = responseBody
+    }
+    
+}
+
+/// Error result if the API request fails.
+public struct APIError<T> where T: ResponseBodyParsable {
+    
+    /// Error reason that explains why API request is failed.
+    public private(set) var error: NSError
+    
+    /// The API request that fails.
+    public private(set) var api: APIConfiguration<T>
+    
+    internal init(request: APIConfiguration<T>, error: NSError) {
+        self.api = request
+        self.error = error
+    }
+
 }
