@@ -58,7 +58,16 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
     /**
      Initializes Configuration with the host URL and endpoint separately.
      Returns nil if request URL cannot be created successfuly.
+     - parameter hostURL: Base URL for the request. (e.g. "https://example.com")
+     - parameter endPoint: Endpoint for the API request. (e.g. "v1/api/test")
+     - parameter priority: Defines the priority of the operation in its queue.
+     - parameter timeOut: Timeout value for the request to fail if it cannot get answer from network in seconds. In default, it's 30 seconds.
+     - parameter cachingTime: Default caching time for the response, in default it's 1 hour.
+     - parameter requestType: Type of the request. In default it's `get`.
      - parameter isMainOperation: If `true`, operation will be performed in special queue and return to main queue.
+     - parameter headers: Headers for the API request. Don't need to add `content-Type` for JSON request bodies, which will be automatically added.
+     - parameter body: Request body for the API request.
+     - parameter responseBodyObject: Type of the Response Object to create.
      - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
      Then specified custom caching will be applied for that request.
      */
@@ -91,7 +100,15 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
     
     /**
      Initializes Configuration with the URL
+     - parameter url: Request URL.
+     - parameter priority: Defines the priority of the operation in its queue.
+     - parameter timeOut: Timeout value for the request to fail if it cannot get answer from network in seconds. In default, it's 30 seconds.
+     - parameter cachingTime: Default caching time for the response, in default it's 1 hour.
+     - parameter requestType: Type of the request. In default it's `get`.
      - parameter isMainOperation: If `true`, operation will be performed in special queue and return to main queue.
+     - parameter headers: Headers for the API request. Don't need to add `content-Type` for JSON request bodies, which will be automatically added.
+     - parameter body: Request body for the API request.
+     - parameter responseBodyObject: Type of the Response Object to create.
      - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
      Then specified custom caching will be applied for that request.
      */
