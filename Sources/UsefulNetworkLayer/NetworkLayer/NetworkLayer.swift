@@ -21,7 +21,7 @@
 // THE SOFTWARE.
 
 import Foundation
-import iOSCoreUsefulSDK
+import CoreUsefulSDK
 
 /**
  Base Network Layer that capable to cache and manage the operation queue.

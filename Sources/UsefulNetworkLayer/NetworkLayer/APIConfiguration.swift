@@ -21,7 +21,7 @@
 // THE SOFTWARE.
 
 import Foundation
-import iOSCoreUsefulSDK
+import CoreUsefulSDK
 
 /// Structure that keeps all information needed from Network Layer for operations.
 public struct APIConfiguration<T> where T: ResponseBodyParsable {
