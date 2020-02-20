@@ -182,52 +182,22 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
 }
 
 /**
- The response objects should be inherited from the `ResponseBodyParsable` to operate by the `NetworkLayer`.
- */
-open class ResponseBodyParsable: NSObject, NSDiscardableContent {
-    
-    /// Returns creation date of the response by the `NetworkLayer`.
-    public private(set) var creationDate: Date
-    
-    /// Override this initializer to create responses from the `Data`.
-    /// - parameter data: The response represented as `Data`
-    required public init?(_ data: Data) {
-        self.creationDate = Date()
-    }
-    
-    /// Override this initializer to create responses from the `JSON` object.
-    /// - parameter response: The `JSON` object as `Any` type which could be casted to `Dictionary` or `Array`
-    required public init?(_ response: Any?) {
-        self.creationDate = Date()
-    }
-    
-    /// Returns `true` in default.
-    public func beginContentAccess() -> Bool {
-        print("\(self.typeName): Content access successful")
-        return true
-    }
-    
-    /// Doesn't do anything in default.
-    public func endContentAccess() {
-        print("\(self.typeName): Content cannot be accessed anymore")
-    }
-    
-    /// Doesn't do anything in default.
-    public func discardContentIfPossible() {
-        print("\(self.typeName): Discard content called")
-    }
-    
-    /// Returns `false` in default.
-    public func isContentDiscarded() -> Bool {
-        return false
-    }
-    
-    /// Return specified parameter to work with `autoCache` API requests.
-    public func cachingEndsAt() -> Date? {
-        return nil
-    }
+The response objects should be inherited from the `ResponseBodyParsable` to operate by the `NetworkLayer`.
+*/
+public protocol ResponseBodyParsable: Codable, NameDescribeable {
+    /// To allow `NetworkLayer` to use defined initializer, set `true`, otherwise `Codable` protocol will be used.
+    static var shouldUseCustomInitializer: Bool { get }
+    /// Use this initializer to allow custom parsing from JSON object.
+    init?(response: Any?)
+    /// Use this initializer to allow custom parsing from Data directly.
+    init?(data: Data)
+    /// If custom value is defined, Caching will use this method to detect expiry.
+    func cachingEndsAt() -> Date?
 }
 
+public extension ResponseBodyParsable {
+    func cachingEndsAt() -> Date? { return nil }
+}
 
 /// Response of the API if request is completed successfully.
 public struct APIResponse<T> where T: ResponseBodyParsable {

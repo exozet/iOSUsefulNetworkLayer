@@ -198,7 +198,18 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                                     request: APIConfiguration<T>,
                                     completion: @escaping (Result<T>)->()) where T: ResponseBodyParsable {
         
-        if let dataObject = request.responseBodyObject.init(data) {
+        if !request.responseBodyObject.shouldUseCustomInitializer {
+            do {
+                let jsonObject = try JSONDecoder().decode(request.responseBodyObject, from: data)
+                completion(.success(.init(response: response, responseBody: jsonObject)))
+            } catch {
+                completion(.error(.init(request: request, error: error as NSError)))
+            }
+            
+            return
+        }
+        
+        if let dataObject = request.responseBodyObject.init(data: data) {
             self.sendLog(message: "Data Object created from Operation: \(operationId) - Object: \(dataObject.typeName)")
             if request.autoCache, let cacheTiming = dataObject.cachingEndsAt() {
                 self._cache?.changeCacheExpiry(for: request.request!, to: cacheTiming)
@@ -211,7 +222,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         
         do {
             let json = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
-            if let responseObject = request.responseBodyObject.init(json) {
+            if let responseObject = request.responseBodyObject.init(response: json) {
                 self.sendLog(message: "Response Object Created from JSON Data with Operation: \(operationId) - Object: \(responseObject.typeName)")
                 if request.autoCache, let cacheTiming = responseObject.cachingEndsAt() {
                     self._cache?.changeCacheExpiry(for: request.request!, to: cacheTiming)

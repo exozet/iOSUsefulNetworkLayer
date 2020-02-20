@@ -1,5 +1,5 @@
 import XCTest
-@testable import iOSUsefulNetworkLayer
+@testable import UsefulNetworkLayer
 
 final class iOSUsefulNetworkLayerTests: XCTestCase {
     func testExample() {
@@ -31,7 +31,7 @@ final class iOSUsefulNetworkLayerTests: XCTestCase {
             case .error(let err):
                 XCTFail("Error: \(err.error.localizedDescription)")
                 break
-            case .success(_):
+            case .success(let obj):
                 exp.fulfill()
             }
         }
@@ -47,26 +47,26 @@ final class iOSUsefulNetworkLayerTests: XCTestCase {
 
 class ExampleResponseObject: ResponseBodyParsable {
     
+    static var shouldUseCustomInitializer: Bool { return false }
     var userId: Int
     var id: Int
     var title: String
     var completed: Bool
     
-    required init?(_ data: Data) {
+    required init?(data: Data) {
         return nil
     }
-    
-    required init?(_ response: Any?) {
+
+    required init?(response: Any?) {
         guard let dict = response as? [String:Any] else { return nil }
         guard let userId = dict["userId"] as? Int,
         let id = dict["id"] as? Int,
         let title = dict["title"] as? String,
             let completed = dict["completed"] as? Bool else { return nil }
-        
+
         self.userId = userId
         self.id = id
         self.title = title
         self.completed = completed
-        super.init(response)
     }
 }
