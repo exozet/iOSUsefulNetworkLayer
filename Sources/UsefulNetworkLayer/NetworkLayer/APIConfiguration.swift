@@ -197,6 +197,7 @@ public protocol ResponseBodyParsable: Codable, NameDescribeable {
 
 public extension ResponseBodyParsable {
     func cachingEndsAt() -> Date? { return nil }
+    static var shouldUseCustomInitializer: Bool { return false }
 }
 
 /// Response of the API if request is completed successfully.
