@@ -196,8 +196,18 @@ public protocol ResponseBodyParsable: Codable, NameDescribeable {
 }
 
 public extension ResponseBodyParsable {
+    init?(response: Any?) { return nil }
+    init?(data: Data) { return nil }
     func cachingEndsAt() -> Date? { return nil }
     static var shouldUseCustomInitializer: Bool { return false }
+}
+
+extension Array: NameDescribeable where Element: NameDescribeable {
+    
+}
+
+extension Array: ResponseBodyParsable where Element: ResponseBodyParsable {
+    
 }
 
 /// Response of the API if request is completed successfully.
