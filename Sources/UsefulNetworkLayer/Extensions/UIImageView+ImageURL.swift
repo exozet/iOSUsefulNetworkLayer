@@ -14,7 +14,7 @@ extension UIImageView {
     ///
     /// During the loading process, this method is also capable to add activity indicator.
     /// Change tag value if other method will be called also to change image of the imageview to override again.
-    public func imageFromUrl(urlString: String?, fallback: UIImage?, errorCompletion: ((_ error: NSError)->())? = nil){
+    open func imageFromUrl(urlString: String?, fallback: UIImage?, errorCompletion: ((_ error: NSError)->())? = nil){
         guard let urlStr = urlString, let url = URL(string: urlStr) else {
             self.image = fallback
             return
@@ -29,7 +29,7 @@ extension UIImageView {
      - parameter completion: Returns the image that set to imageview even it fallbacks to error. If `fallback` is set, at worst it will return the fallback.
      - parameter errorCompletion: This block will be called if any error happens
      */
-    public func imageFromUrl(url: URL?, fallback: UIImage?,
+    open func imageFromUrl(url: URL?, fallback: UIImage?,
                              errorCompletion: ((_ error: NSError)->())? = nil,
                              completion: ((_ image: UIImage?)->())?) {
         guard let url = url else {
@@ -87,11 +87,11 @@ extension UIImageView {
 }
 
 /// Wrapper Class to convert Data to UIImage.
-class ResponseImage: ResponseBodyParsable {
+public class ResponseImage: ResponseBodyParsable {
     
-    static var shouldUseCustomInitializer: Bool { true }
+    public static var shouldUseCustomInitializer: Bool { true }
     /// holds `UIImage` object inside.
-    var image: UIImage
+    public var image: UIImage
     
     required init?(_ data: Data) {
         guard let image = UIImage(data: data) else {
@@ -101,11 +101,11 @@ class ResponseImage: ResponseBodyParsable {
         self.image = image
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         
     }
     
-    required init(from decoder: Decoder) throws {
+    required public init(from decoder: Decoder) throws {
         self.image = UIImage()
     }
     
@@ -113,7 +113,7 @@ class ResponseImage: ResponseBodyParsable {
         return nil
     }
     
-    func cachingEndsAt() -> Date? {
+    public func cachingEndsAt() -> Date? {
         return Date().addingTimeInterval(60 * 60)
     }
     
