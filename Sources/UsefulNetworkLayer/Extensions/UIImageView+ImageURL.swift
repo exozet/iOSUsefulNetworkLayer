@@ -8,13 +8,13 @@
 
 import UIKit
 
-extension UIImageView {
+public extension UIImageView {
     
     /// Creates and sets Image to the ImageView from given remote URL.
     ///
     /// During the loading process, this method is also capable to add activity indicator.
     /// Change tag value if other method will be called also to change image of the imageview to override again.
-    open func imageFromUrl(urlString: String?, fallback: UIImage?, errorCompletion: ((_ error: NSError)->())? = nil){
+    func imageFromUrl(urlString: String?, fallback: UIImage?, errorCompletion: ((_ error: NSError)->())? = nil){
         guard let urlStr = urlString, let url = URL(string: urlStr) else {
             self.image = fallback
             return
@@ -29,7 +29,7 @@ extension UIImageView {
      - parameter completion: Returns the image that set to imageview even it fallbacks to error. If `fallback` is set, at worst it will return the fallback.
      - parameter errorCompletion: This block will be called if any error happens
      */
-    open func imageFromUrl(url: URL?, fallback: UIImage?,
+    func imageFromUrl(url: URL?, fallback: UIImage?,
                              errorCompletion: ((_ error: NSError)->())? = nil,
                              completion: ((_ image: UIImage?)->())?) {
         guard let url = url else {
