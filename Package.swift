@@ -22,8 +22,8 @@ let package = Package(
         .target(
             name: "UsefulNetworkLayer",
             dependencies: ["CoreUsefulSDK"]),
-//        .testTarget(
-//        name: "iOSUsefulNetworkLayerTests",
-//        dependencies: ["UsefulNetworkLayer", "CoreUsefulSDK"]),
+        .testTarget(
+        name: "iOSUsefulNetworkLayerTests",
+        dependencies: ["UsefulNetworkLayer", "CoreUsefulSDK"]),
     ]
 )
