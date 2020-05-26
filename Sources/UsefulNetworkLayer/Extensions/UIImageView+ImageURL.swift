@@ -87,13 +87,13 @@ public extension UIImageView {
 }
 
 /// Wrapper Class to convert Data to UIImage.
-public class ResponseImage: ResponseBodyParsable {
+public struct ResponseImage: ResponseBodyParsable {
     
     public static var shouldUseCustomInitializer: Bool { true }
     /// holds `UIImage` object inside.
     public var image: UIImage
     
-    required init?(_ data: Data) {
+    public init?(data: Data) {
         guard let image = UIImage(data: data) else {
             return nil
         }
@@ -105,11 +105,11 @@ public class ResponseImage: ResponseBodyParsable {
         
     }
     
-    required public init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         self.image = UIImage()
     }
     
-    required init?(_ response: Any?) {
+    public init?(response: Any?) {
         return nil
     }
     
