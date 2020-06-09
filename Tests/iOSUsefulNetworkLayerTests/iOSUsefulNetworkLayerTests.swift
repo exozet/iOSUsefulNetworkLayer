@@ -12,6 +12,7 @@ final class iOSUsefulNetworkLayerTests: XCTestCase {
     func testNetworkLayer() {
         let exp = XCTestExpectation(description: "Network layer should response success")
 
+        
         let api = APIConfiguration(hostURL: "https://jsonplaceholder.typicode.com",
                                    endPoint: "todos/1",
                                    requestType: .get,
@@ -28,8 +29,8 @@ final class iOSUsefulNetworkLayerTests: XCTestCase {
         
         apiReq.request { (result) in
             switch result {
-            case .error(let err):
-                XCTFail("Error: \(err.error.localizedDescription)")
+            case .failure(let err):
+                XCTFail("Error: \(err.errorReason.error?.localizedDescription)")
                 break
             case .success(let obj):
                 print(obj)
@@ -42,15 +43,15 @@ final class iOSUsefulNetworkLayerTests: XCTestCase {
     
     func testNetworkLayerArray() {
         let exp = XCTestExpectation(description: "Network layer should response success")
-
-        let api = APIConfiguration(hostURL: "https://jsonplaceholder.typicode.com",
-                                   endPoint: "todos",
-                                   requestType: .get,
-                                   headers: nil, body: nil,
-                                   responseBodyObject: [ExampleResponseObject].self,
-                                   priority: .low,
-                                   cachingTime: .init(seconds: 60),
-                                   isMainOperation: false, autoCache: true)
+        
+        let api = APIConfiguration<[ExampleResponseObject], DefaultAPIError>(hostURL: "https://jsonplaceholder.typicode.com",
+                                                                             endPoint: "todos",
+                                                                             requestType: .get,
+                                                                             headers: nil, body: nil,
+                                                                             responseBodyObject: [ExampleResponseObject].self,
+                                                                             priority: .low,
+                                                                             cachingTime: .init(seconds: 60),
+                                                                             isMainOperation: false, autoCache: true)
         
         guard let apiReq = api else {
             XCTFail()
@@ -59,8 +60,8 @@ final class iOSUsefulNetworkLayerTests: XCTestCase {
         
         apiReq.request { (result) in
             switch result {
-            case .error(let err):
-                XCTFail("Error: \(err.error.localizedDescription)")
+            case .failure(let err):
+                XCTFail("Error: \(err.errorReason.error?.localizedDescription)")
                 break
             case .success(let obj):
                 print(obj)

@@ -24,7 +24,7 @@ import Foundation
 import CoreUsefulSDK
 
 /// Structure that keeps all information needed from Network Layer for operations.
-public struct APIConfiguration<T> where T: ResponseBodyParsable {
+public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorResponseParsable {
     /// Returns `URL` of the API request.
     public var requestURL: URL
     
@@ -40,6 +40,9 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
     /// The expected object type from the request.
     public var responseBodyObject: T.Type
     
+    /// The expected object type for the errors.
+    public var errorResponseBodyObject: S.Type
+    
     /// `NetworkLayer` priorities the API request by looking that parameter.
     public var priority: Operation.QueuePriority
     
@@ -54,7 +57,7 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
     
     /// The timeout value for the request wait time.
     public var timeOut: Int
-    
+        
     /**
      Initializes Configuration with the host URL and endpoint separately.
      Returns nil if request URL cannot be created successfuly.
@@ -72,30 +75,32 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
      Then specified custom caching will be applied for that request.
      */
     public init?(hostURL: String, endPoint: String,
-          requestType: NetworkLayer.RequestType = .get,
-          headers: [String:String]? = nil,
-          body: [String:Any]? = nil,
-          responseBodyObject: T.Type,
-          priority: Operation.QueuePriority = Operation.QueuePriority.normal,
-          cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
-          isMainOperation: Bool = false,
-          autoCache: Bool = false,
-          timeOut: Int = 30) {
+                 requestType: NetworkLayer.RequestType = .get,
+                 headers: [String:String]? = nil,
+                 body: [String:Any]? = nil,
+                 responseBodyObject: T.Type,
+                 errorType: S.Type,
+                 priority: Operation.QueuePriority = Operation.QueuePriority.normal,
+                 cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
+                 isMainOperation: Bool = false,
+                 autoCache: Bool = false,
+                 timeOut: Int = 30) {
         
         var url = URL(string: hostURL)
         url?.appendPathComponent(endPoint)
         guard let requestURL = url else { return nil }
         
-        self.requestURL = requestURL
-        self.requestType = requestType
-        self.headers = headers
-        self.body = body
-        self.responseBodyObject = responseBodyObject
-        self.priority = priority
-        self.cachingTime = cachingTime
-        self.isMainOperation = isMainOperation
-        self.autoCache = autoCache
-        self.timeOut = timeOut
+        self.init(url: requestURL,
+                  requestType: requestType,
+                  headers: headers,
+                  body: body,
+                  responseBodyObject: responseBodyObject,
+                  errorType: errorType,
+                  priority: priority,
+                  cachingTime: cachingTime,
+                  isMainOperation: isMainOperation,
+                  autoCache: autoCache,
+                  timeOut: timeOut)
     }
     
     /**
@@ -113,15 +118,16 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
      Then specified custom caching will be applied for that request.
      */
     public init(url: URL,
-         requestType: NetworkLayer.RequestType = .get,
-         headers: [String:String]? = nil,
-         body: [String:Any]? = nil,
-         responseBodyObject: T.Type,
-         priority: Operation.QueuePriority = .normal,
-         cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
-         isMainOperation: Bool = false,
-         autoCache: Bool = false,
-         timeOut: Int = 30) {
+                requestType: NetworkLayer.RequestType = .get,
+                headers: [String:String]? = nil,
+                body: [String:Any]? = nil,
+                responseBodyObject: T.Type,
+                errorType: S.Type,
+                priority: Operation.QueuePriority = .normal,
+                cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
+                isMainOperation: Bool = false,
+                autoCache: Bool = false,
+                timeOut: Int = 30) {
         
         self.requestURL = url
         self.requestType = requestType
@@ -133,6 +139,7 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
         self.isMainOperation = isMainOperation
         self.autoCache = autoCache
         self.timeOut = timeOut
+        self.errorResponseBodyObject = errorType
     }
     
     /// Tries to create URL request by specified parameters.
@@ -175,69 +182,90 @@ public struct APIConfiguration<T> where T: ResponseBodyParsable {
     /// Requests given API configuration by using `NetworkLayer`.
     /// - Parameter completion: Completion block which contains error or success case.
     /// - Parameter response: Response `Enum` which has two cases, whether `error` or `success`.
-    public func request(completion: @escaping (_ response: NetworkLayer.Result<T>)->()) {
+    public func request(completion: @escaping (_ response: NetworkLayer.Result<T,S>)->()) {
         NetworkLayer.execute(self, completion: completion)
     }
     
 }
 
-/**
-The response objects should be inherited from the `ResponseBodyParsable` to operate by the `NetworkLayer`.
-*/
-public protocol ResponseBodyParsable: Codable, NameDescribeable {
-    /// To allow `NetworkLayer` to use defined initializer, set `true`, otherwise `Codable` protocol will be used.
-    static var shouldUseCustomInitializer: Bool { get }
-    /// Use this initializer to allow custom parsing from JSON object.
-    init?(response: Any?)
-    /// Use this initializer to allow custom parsing from Data directly.
-    init?(data: Data)
-    /// If custom value is defined, Caching will use this method to detect expiry.
-    func cachingEndsAt() -> Date?
-}
-
-public extension ResponseBodyParsable {
-    init?(response: Any?) { return nil }
-    init?(data: Data) { return nil }
-    func cachingEndsAt() -> Date? { return nil }
-    static var shouldUseCustomInitializer: Bool { return false }
-}
-
-extension Array: NameDescribeable where Element: NameDescribeable {
+public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPIError {
     
-}
-
-extension Array: ResponseBodyParsable where Element: ResponseBodyParsable {
-    
-}
-
-/// Response of the API if request is completed successfully.
-public struct APIResponse<T> where T: ResponseBodyParsable {
-    
-    /// Response body of the API request.
-    public private(set) var responseBody: T
-    
-    /// Main URL response of the API request.
-    public private(set) var response: URLResponse
-    
-    internal init(response: URLResponse, responseBody: T) {
-        self.response = response
-        self.responseBody = responseBody
+    /**
+     Initializes Configuration with the host URL and endpoint separately. Initializes `DefaultAPIError` if any error occurs.
+     Returns nil if request URL cannot be created successfuly.
+     - parameter hostURL: Base URL for the request. (e.g. "https://example.com")
+     - parameter endPoint: Endpoint for the API request. (e.g. "v1/api/test")
+     - parameter priority: Defines the priority of the operation in its queue.
+     - parameter timeOut: Timeout value for the request to fail if it cannot get answer from network in seconds. In default, it's 30 seconds.
+     - parameter cachingTime: Default caching time for the response, in default it's 1 hour.
+     - parameter requestType: Type of the request. In default it's `get`.
+     - parameter isMainOperation: If `true`, operation will be performed in special queue and return to main queue.
+     - parameter headers: Headers for the API request. Don't need to add `content-Type` for JSON request bodies, which will be automatically added.
+     - parameter body: Request body for the API request.
+     - parameter responseBodyObject: Type of the Response Object to create.
+     - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
+     Then specified custom caching will be applied for that request.
+     */
+    init?(hostURL: String, endPoint: String,
+          requestType: NetworkLayer.RequestType = .get,
+          headers: [String:String]? = nil,
+          body: [String:Any]? = nil,
+          responseBodyObject: T.Type,
+          priority: Operation.QueuePriority = Operation.QueuePriority.normal,
+          cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
+          isMainOperation: Bool = false,
+          autoCache: Bool = false,
+          timeOut: Int = 30) {
+        
+        self.init(hostURL: hostURL,
+                  endPoint: endPoint,
+                  requestType: requestType,
+                  headers: headers,
+                  body: body,
+                  responseBodyObject: responseBodyObject,
+                  errorType: DefaultAPIError.self,
+                  priority: priority,
+                  cachingTime: cachingTime,
+                  isMainOperation: isMainOperation,
+                  autoCache: autoCache,
+                  timeOut: timeOut)
     }
     
-}
-
-/// Error result if the API request fails.
-public struct APIError<T> where T: ResponseBodyParsable {
-    
-    /// Error reason that explains why API request is failed.
-    public private(set) var error: NSError
-    
-    /// The API request that fails.
-    public private(set) var api: APIConfiguration<T>
-    
-    internal init(request: APIConfiguration<T>, error: NSError) {
-        self.api = request
-        self.error = error
+    /**
+     Initializes Configuration with the URL and initializes `DefaultAPIError` if any error occurs.
+     - parameter url: Request URL.
+     - parameter priority: Defines the priority of the operation in its queue.
+     - parameter timeOut: Timeout value for the request to fail if it cannot get answer from network in seconds. In default, it's 30 seconds.
+     - parameter cachingTime: Default caching time for the response, in default it's 1 hour.
+     - parameter requestType: Type of the request. In default it's `get`.
+     - parameter isMainOperation: If `true`, operation will be performed in special queue and return to main queue.
+     - parameter headers: Headers for the API request. Don't need to add `content-Type` for JSON request bodies, which will be automatically added.
+     - parameter body: Request body for the API request.
+     - parameter responseBodyObject: Type of the Response Object to create.
+     - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
+     Then specified custom caching will be applied for that request.
+     */
+    init(url: URL,
+         requestType: NetworkLayer.RequestType = .get,
+         headers: [String:String]? = nil,
+         body: [String:Any]? = nil,
+         responseBodyObject: T.Type,
+         priority: Operation.QueuePriority = .normal,
+         cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
+         isMainOperation: Bool = false,
+         autoCache: Bool = false,
+         timeOut: Int = 30) {
+        
+        self.init(url: url,
+                  requestType: requestType,
+                  headers: headers,
+                  body: body,
+                  responseBodyObject: responseBodyObject,
+                  errorType: DefaultAPIError.self,
+                  priority: priority,
+                  cachingTime: cachingTime,
+                  isMainOperation: isMainOperation,
+                  autoCache: autoCache,
+                  timeOut: timeOut)
     }
-
 }

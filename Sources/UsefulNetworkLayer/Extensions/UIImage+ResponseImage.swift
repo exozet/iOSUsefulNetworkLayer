@@ -6,6 +6,7 @@
 //  Copyright © 2020 BUZ. All rights reserved.
 //
 
+#if !os(macOS)
 import UIKit
 
 /**
@@ -20,7 +21,7 @@ public extension UIImage {
         
         api.request { (result) in
             switch result {
-            case .error(_):
+            case .failure(_):
                 completion(nil)
             case .success(let response):
                 completion(response.responseBody.image)
@@ -48,3 +49,4 @@ public extension UIImage {
     
 }
 
+#endif

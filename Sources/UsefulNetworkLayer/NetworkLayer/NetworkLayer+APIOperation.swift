@@ -62,7 +62,9 @@ extension NetworkLayer {
          - parameter configuration: The API object which requests task.
          - parameter task: Task which will be operated for the API request.
          */
-        init<T>(configuration: APIConfiguration<T>, task: URLSessionTask, identifier: Int) where T: ResponseBodyParsable {
+        init<T,S>(configuration: APIConfiguration<T,S>,
+                task: URLSessionTask,
+                identifier: Int) where T: ResponseBodyParsable, S: ErrorResponseParsable {
             self.task = task
             self.identifier = identifier
             super.init()

@@ -6,6 +6,7 @@
 //  Copyright © 2020 BUZ. All rights reserved.
 //
 
+#if !os(macOS)
 import UIKit
 
 public extension UIImageView {
@@ -59,17 +60,17 @@ public extension UIImageView {
         activityIndicator.centerXAnchor.constraint(equalTo: self.centerXAnchor).isActive = true
         activityIndicator.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
         
-        let request = APIConfiguration(url: url,
-                                       responseBodyObject: ResponseImage.self,
-                                       priority: .high, timeOut: 10)
+        let request = APIConfiguration<ResponseImage, DefaultAPIError>(url: url,
+                                                                         responseBodyObject: ResponseImage.self,
+                                                                         priority: .high, timeOut: 10)
         
         request.request { (result) in
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 activityIndicator.removeFromSuperview()
                 switch result {
-                case .error(let error):
-                    errorCompletion?(error.error)
+                case .failure(let error):
+                    errorCompletion?(error.errorReason.error! as NSError)
                     if let fallback = fallback {
                         self.image = fallback
                     }
@@ -119,3 +120,4 @@ public struct ResponseImage: ResponseBodyParsable {
     
 }
 
+#endif
