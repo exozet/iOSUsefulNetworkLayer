@@ -24,7 +24,7 @@ public extension UIImage {
             case .failure(_):
                 completion(nil)
             case .success(let response):
-                completion(response.responseBody.image)
+                completion(response.responseBody?.image)
             }
         }
         

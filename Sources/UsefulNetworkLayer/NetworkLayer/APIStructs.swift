@@ -56,12 +56,12 @@ extension Array: ResponseBodyParsable where Element: ResponseBodyParsable {
 public struct APIResponse<T> where T: ResponseBodyParsable {
     
     /// Response body of the API request.
-    public private(set) var responseBody: T
+    public private(set) var responseBody: T?
     
     /// Main URL response of the API request.
     public private(set) var response: URLResponse
     
-    internal init(response: URLResponse, responseBody: T) {
+    internal init(response: URLResponse, responseBody: T?) {
         self.response = response
         self.responseBody = responseBody
     }

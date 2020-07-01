@@ -77,8 +77,8 @@ public extension UIImageView {
                     completion?(fallback)
                 case .success(let image):
                     if self.tag == dateTag {
-                        self.image = image.responseBody.image
-                        completion?(image.responseBody.image)
+                        self.image = image.responseBody?.image
+                        completion?(image.responseBody?.image)
                     }
                 }
             }

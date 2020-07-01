@@ -207,10 +207,16 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
             do {
                 message.customMessage = (try JSONDecoder().decode(request.errorResponseBodyObject.T.self, from: data))
             } catch {
-                self.sendLog(message: "Custom error message couldn't be created for Lperation: \(operationId)", logType: .info)
+                self.sendLog(message: "Custom error message couldn't be created for Operation: \(operationId)", logType: .info)
             }
             self.sendLog(message: "HTTP Request failed with status \(statusCode) \(message)", logType: .error(code: statusCode, name: ""))
             completion(.failure(.init(request: request, error: message)))
+            return
+        }
+        
+        guard data.count > 0 else {
+            self.sendLog(message: "Data of the response is empty - Ignoring response creation - Operation: \(operationId)", logType: .info)
+            completion(.success(.init(response: response, responseBody: nil)))
             return
         }
         
