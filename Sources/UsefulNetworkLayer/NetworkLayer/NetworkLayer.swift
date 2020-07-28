@@ -210,24 +210,32 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                 self.sendLog(message: "Custom error message couldn't be created for Operation: \(operationId)", logType: .info)
             }
             self.sendLog(message: "HTTP Request failed with status \(statusCode) \(message)", logType: .error(code: statusCode, name: ""))
-            completion(.failure(.init(request: request, error: message)))
+            DispatchQueue.main.async {
+                completion(.failure(.init(request: request, error: message)))
+            }
             return
         }
         
         guard data.count > 0 else {
             self.sendLog(message: "Data of the response is empty - Ignoring response creation - Operation: \(operationId)", logType: .info)
-            completion(.success(.init(response: response, responseBody: nil)))
+            DispatchQueue.main.async {
+                completion(.success(.init(response: response, responseBody: nil)))
+            }
             return
         }
         
         if !request.responseBodyObject.shouldUseCustomInitializer {
             do {
                 let jsonObject = try JSONDecoder().decode(request.responseBodyObject, from: data)
-                completion(.success(.init(response: response, responseBody: jsonObject)))
+                DispatchQueue.main.async {
+                    completion(.success(.init(response: response, responseBody: jsonObject)))
+                }
             } catch {
                 var errorBody = S.init()
                 errorBody.error = error
-                completion(.failure(.init(request: request, error: errorBody)))
+                DispatchQueue.main.async {
+                    completion(.failure(.init(request: request, error: errorBody)))
+                }
             }
             
             return
