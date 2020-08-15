@@ -61,9 +61,13 @@ public struct APIResponse<T> where T: ResponseBodyParsable {
     /// Main URL response of the API request.
     public private(set) var response: URLResponse
     
-    internal init(response: URLResponse, responseBody: T?) {
+    /// Returns `true` if the response is loaded from cache.
+    public private(set) var isCachedResponse: Bool
+    
+    internal init(response: URLResponse, responseBody: T?, isCached: Bool) {
         self.response = response
         self.responseBody = responseBody
+        self.isCachedResponse = isCached
     }
     
 }

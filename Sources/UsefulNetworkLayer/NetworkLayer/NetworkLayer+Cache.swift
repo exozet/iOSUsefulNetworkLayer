@@ -25,10 +25,10 @@ import Foundation
 import UIKit
 #endif
 
-public extension NetworkLayer {
+extension NetworkLayer {
     
     /// Custom Caching class.
-    class Cache: URLCache {
+    open class Cache: URLCache {
         
         /// Default initializer.
         override init() {
@@ -64,50 +64,13 @@ public extension NetworkLayer {
         
         /// Checks validity of the cached response with expiry value. Returns `nil` if its not valid.
         private func checkCachedResponse(_ response: CachedURLResponse?) -> CachedURLResponse? {
-            guard let endDate = response?.userInfo?["cachingEndsAt"] as? Date else { return response }
+            guard let endDate = response?.userInfo?["cachingEndsAt"] as? Date else { return nil }
             
             if endDate > Date() {
                 return response
             } else {
                 return nil
             }
-        }
-        
-        /// Updates cache expiry of the specified request
-        /// - returns: `true` if timer updated successfuly.
-        @discardableResult
-        public func changeCacheExpiry(for request: URLRequest, to date: Date) -> Bool {
-            if let cachedResponse = self.cachedResponseWithForce(for: request) {
-                let userInfo = ["cachingEndsAt": date]
-                let newCacheObj = CachedURLResponse(response: cachedResponse.response,
-                                                    data: cachedResponse.data,
-                                                    userInfo: userInfo,
-                                                    storagePolicy: .allowed)
-                self.removeCachedResponse(for: request)
-                self.storeCachedResponse(newCacheObj, for: request)
-                return true
-            }
-            
-            return false
-        }
-        
-        /// Updates cache expiry of the specified request
-        /// - returns: `true` if timer updated successfuly.
-        @discardableResult
-        public func changeCacheExpiry(for task: URLSessionDataTask, to date: Date) -> Bool {
-            guard let request = task.currentRequest else { return false }
-            if let cachedResponse = self.cachedResponseWithForce(for: request) {
-                let userInfo = ["cachingEndsAt": date]
-                let newCacheObj = CachedURLResponse(response: cachedResponse.response,
-                                                    data: cachedResponse.data,
-                                                    userInfo: userInfo,
-                                                    storagePolicy: .allowed)
-                self.removeCachedResponse(for: task)
-                self.storeCachedResponse(newCacheObj, for: task)
-                return true
-            }
-            
-            return false
         }
         
         /// Checks the response and acts accordingly.
@@ -154,11 +117,38 @@ public extension NetworkLayer {
         
         /// Calls the super class.
         override public func storeCachedResponse(_ cachedResponse: CachedURLResponse, for request: URLRequest) {
+            if cachedResponse.userInfo?["cachingEndsAt"] as? Date == nil {
+                return
+            }
             super.storeCachedResponse(cachedResponse, for: request)
         }
         
         /// Calls the super class.
         override public func storeCachedResponse(_ cachedResponse: CachedURLResponse, for dataTask: URLSessionDataTask) {
+            if cachedResponse.userInfo?["cachingEndsAt"] as? Date == nil {
+                return
+            }
+            super.storeCachedResponse(cachedResponse, for: dataTask)
+        }
+        
+        open func storeResponse(_ response: URLResponse, data: Data,
+                                for request: URLRequest, expiry: Date) {
+            let userInfo = ["cachingEndsAt": expiry]
+            let cachedResponse = CachedURLResponse(response: response,
+                                                   data: data,
+                                                   userInfo: userInfo,
+                                                   storagePolicy: .allowed)
+            super.storeCachedResponse(cachedResponse, for: request)
+        }
+        
+        /// Calls the super class.
+        public func storeResponse(_ response: URLResponse, data: Data,
+                                  for dataTask: URLSessionDataTask, expiry: Date) {
+            let userInfo = ["cachingEndsAt": expiry]
+            let cachedResponse = CachedURLResponse(response: response,
+                                                   data: data,
+                                                   userInfo: userInfo,
+                                                   storagePolicy: .allowed)
             super.storeCachedResponse(cachedResponse, for: dataTask)
         }
         

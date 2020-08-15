@@ -133,10 +133,10 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
             let id = Int(Date().timeIntervalSince1970 * 1000)
             var operation: APIOperation!
             var task: URLSessionDataTask!
-            
             task = instance._urlSession.dataTask(with: urlRequest) { (data, response, error) in
                 guard operation != nil else { return }
                 
+                var isCached = false
                 instance.sendLog(message: "Data Task for Operation ID: \(operation.identifier) is completed - URL: \(urlRequest.url?.absoluteString ?? "nil")")
                 operation.isFinished = true
                 var dataResult = data ?? Data()
@@ -146,6 +146,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                     if let oldCacheObject = instance._cache?.cachedResponseWithForce(for: urlRequest) {
                         dataResult = oldCacheObject.data
                         loadedResponse = oldCacheObject.response
+                        isCached = true
                     } else {
                         instance.sendLog(message: "Operation:\(operation.identifier) failed with error: \(error.localizedDescription)", logType: .error(code: (error as NSError).code, name: error.localizedDescription))
                         DispatchQueue.main.async {
@@ -157,12 +158,15 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                     }
                 }
                 
-                instance._cache?.changeCacheExpiry(for: task, to: request.cachingTime.expirationDate ?? Date())
+                instance._cache?.storeResponse(loadedResponse!, data: dataResult,
+                                               for: task, expiry: request.cachingTime.expirationDate ?? Date())
                 
                 instance.proceedResponse(response: loadedResponse!,
                                          data: dataResult,
                                          operationId: operation.identifier,
                                          request: request,
+                                         isCachedResponse: isCached,
+                                         dataTask: task,
                                          completion: completion)
             }
             
@@ -171,10 +175,12 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                     // found in the cache, proceed
                     instance.sendLog(message: "Operation with ID: \(id) is gathered from the cache - Caching ends: \(response.userInfo?["cachingEndsAt"] ?? "Nil")")
                     instance.proceedResponse(response: response.response,
-                                         data: response.data,
-                                         operationId: id,
-                                         request: request,
-                                         completion: completion)
+                                             data: response.data,
+                                             operationId: id,
+                                             request: request,
+                                             isCachedResponse: true,
+                                             dataTask: task,
+                                             completion: completion)
                     task.cancel()
                 } else {
                     operation = request.operation(with: task, id: id)
@@ -198,6 +204,8 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
     private func proceedResponse<T,S>(response: URLResponse, data: Data,
                                       operationId: Int,
                                       request: APIConfiguration<T,S>,
+                                      isCachedResponse: Bool,
+                                      dataTask: URLSessionDataTask,
                                       completion: @escaping (Result<T,S>)->()) where T: ResponseBodyParsable, S: ErrorResponseParsable {
         
         let statusCode = (response as! HTTPURLResponse).statusCode
@@ -219,7 +227,9 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         guard data.count > 0 else {
             self.sendLog(message: "Data of the response is empty - Ignoring response creation - Operation: \(operationId)", logType: .info)
             DispatchQueue.main.async {
-                completion(.success(.init(response: response, responseBody: nil)))
+                completion(.success(.init(response: response,
+                                          responseBody: nil,
+                                          isCached: isCachedResponse)))
             }
             return
         }
@@ -228,7 +238,9 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
             do {
                 let jsonObject = try JSONDecoder().decode(request.responseBodyObject, from: data)
                 DispatchQueue.main.async {
-                    completion(.success(.init(response: response, responseBody: jsonObject)))
+                    completion(.success(.init(response: response,
+                                              responseBody: jsonObject,
+                                              isCached: isCachedResponse)))
                 }
             } catch {
                 var errorBody = S.init()
@@ -244,10 +256,12 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         if let dataObject = request.responseBodyObject.init(data: data) {
             self.sendLog(message: "Data Object created from Operation: \(operationId) - Object: \(dataObject.typeName)")
             if request.autoCache, let cacheTiming = dataObject.cachingEndsAt() {
-                self._cache?.changeCacheExpiry(for: request.request!, to: cacheTiming)
+                self._cache?.storeResponse(response, data: data, for: dataTask, expiry: cacheTiming)
             }
             DispatchQueue.main.async {
-                completion(.success(APIResponse(response: response, responseBody: dataObject)))
+                completion(.success(APIResponse(response: response,
+                                                responseBody: dataObject,
+                                                isCached: isCachedResponse)))
             }
             return
         }
@@ -257,10 +271,12 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
             if let responseObject = request.responseBodyObject.init(response: json) {
                 self.sendLog(message: "Response Object Created from JSON Data with Operation: \(operationId) - Object: \(responseObject.typeName)")
                 if request.autoCache, let cacheTiming = responseObject.cachingEndsAt() {
-                    self._cache?.changeCacheExpiry(for: request.request!, to: cacheTiming)
+                    self._cache?.storeResponse(response, data: data, for: dataTask, expiry: cacheTiming)
                 }
                 DispatchQueue.main.async {
-                    completion(.success(APIResponse(response: response, responseBody: responseObject)))
+                    completion(.success(APIResponse(response: response,
+                                                    responseBody: responseObject,
+                                                    isCached: isCachedResponse)))
                 }
             } else {
                 DispatchQueue.main.async {
