@@ -158,9 +158,6 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                     }
                 }
                 
-                instance._cache?.storeResponse(loadedResponse!, data: dataResult,
-                                               for: task, expiry: request.cachingTime.expirationDate ?? Date())
-                
                 instance.proceedResponse(response: loadedResponse!,
                                          data: dataResult,
                                          operationId: operation.identifier,
@@ -237,6 +234,14 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         if !request.responseBodyObject.shouldUseCustomInitializer {
             do {
                 let jsonObject = try JSONDecoder().decode(request.responseBodyObject, from: data)
+                
+                if request.autoCache, let cacheTiming = jsonObject.cachingEndsAt() {
+                    self._cache?.storeResponse(response, data: data, for: dataTask, expiry: cacheTiming)
+                } else {
+                    self._cache?.storeResponse(response, data: data,
+                                               for: dataTask, expiry: request.cachingTime.expirationDate ?? Date())
+                }
+                
                 DispatchQueue.main.async {
                     completion(.success(.init(response: response,
                                               responseBody: jsonObject,
@@ -257,6 +262,9 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
             self.sendLog(message: "Data Object created from Operation: \(operationId) - Object: \(dataObject.typeName)")
             if request.autoCache, let cacheTiming = dataObject.cachingEndsAt() {
                 self._cache?.storeResponse(response, data: data, for: dataTask, expiry: cacheTiming)
+            } else {
+                self._cache?.storeResponse(response, data: data,
+                                           for: dataTask, expiry: request.cachingTime.expirationDate ?? Date())
             }
             DispatchQueue.main.async {
                 completion(.success(APIResponse(response: response,
@@ -272,6 +280,9 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                 self.sendLog(message: "Response Object Created from JSON Data with Operation: \(operationId) - Object: \(responseObject.typeName)")
                 if request.autoCache, let cacheTiming = responseObject.cachingEndsAt() {
                     self._cache?.storeResponse(response, data: data, for: dataTask, expiry: cacheTiming)
+                } else {
+                    self._cache?.storeResponse(response, data: data,
+                                                   for: dataTask, expiry: request.cachingTime.expirationDate ?? Date())
                 }
                 DispatchQueue.main.async {
                     completion(.success(APIResponse(response: response,
