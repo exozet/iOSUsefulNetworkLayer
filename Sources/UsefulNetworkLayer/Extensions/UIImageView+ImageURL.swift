@@ -6,7 +6,7 @@
 //  Copyright © 2020 BUZ. All rights reserved.
 //
 
-#if !os(macOS)
+#if !os(macOS) && !os(watchOS)
 import UIKit
 
 public extension UIImageView {
@@ -86,6 +86,10 @@ public extension UIImageView {
     }
     
 }
+#endif
+
+#if !os(macOS)
+import UIKit
 
 /// Wrapper Class to convert Data to UIImage.
 public struct ResponseImage: ResponseBodyParsable {
