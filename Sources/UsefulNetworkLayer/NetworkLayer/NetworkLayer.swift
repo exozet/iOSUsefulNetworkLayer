@@ -130,7 +130,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
             }
             
             // create task and operation
-            let id = Int(Date().timeIntervalSince1970 * 1000)
+            let id = Int(Date().timeIntervalSince1970)
             var operation: APIOperation!
             var task: URLSessionDataTask!
             task = instance._urlSession.dataTask(with: urlRequest) { (data, response, error) in
