@@ -15,10 +15,10 @@ public extension UIImageView {
     ///
     /// During the loading process, this method is also capable to add activity indicator.
     /// Change tag value if other method will be called also to change image of the imageview to override again.
-    func imageFromUrl(urlString: String?, fallback: UIImage?, errorCompletion: ((_ error: NSError)->())? = nil){
+    func imageFromUrl(urlString: String?, fallback: UIImage?, errorCompletion: ((_ error: NSError)->())? = nil) -> APITask? {
         guard let urlStr = urlString, let url = URL(string: urlStr) else {
             self.image = fallback
-            return
+            return nil
         }
         
         return self.imageFromUrl(url: url, fallback: fallback, errorCompletion: errorCompletion, completion: nil)
@@ -30,13 +30,13 @@ public extension UIImageView {
      - parameter completion: Returns the image that set to imageview even it fallbacks to error. If `fallback` is set, at worst it will return the fallback.
      - parameter errorCompletion: This block will be called if any error happens
      */
-    func imageFromUrl(url: URL?, fallback: UIImage?,
-                             errorCompletion: ((_ error: NSError)->())? = nil,
-                             completion: ((_ image: UIImage?)->())?) {
+    @discardableResult func imageFromUrl(url: URL?, fallback: UIImage?,
+                                         errorCompletion: ((_ error: NSError)->())? = nil,
+                                         completion: ((_ image: UIImage?)->())?) -> APITask? {
         guard let url = url else {
             self.image = fallback
             completion?(image)
-            return
+            return nil
         }
         
         let dateTag = Int(Date().timeIntervalSince1970 * 1000)
@@ -47,7 +47,7 @@ public extension UIImageView {
         if let image = UIImage.fromCache(url) {
             self.image = image
             completion?(image)
-            return
+            return nil
         }
         
         let activityIndicator = UIActivityIndicatorView(style: .whiteLarge)
@@ -64,7 +64,7 @@ public extension UIImageView {
                                                                          responseBodyObject: ResponseImage.self,
                                                                          priority: .high, timeOut: 10)
         
-        request.request { (result) in
+        return request.request { (result) in
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
                 activityIndicator.removeFromSuperview()

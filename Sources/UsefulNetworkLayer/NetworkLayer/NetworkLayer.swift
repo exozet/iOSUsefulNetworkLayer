@@ -115,24 +115,25 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
      - parameter response: Returns response with the specified type of response
      */
     internal class func execute<T,S>(_ request: APIConfiguration<T,S>,
-                                     completion: @escaping (Result<T,S>)->()) where T:ResponseBodyParsable, S: ErrorResponseParsable {
+                                     completion: @escaping (Result<T,S>)->()) -> URLSessionTask? where T:ResponseBodyParsable, S: ErrorResponseParsable {
         let instance = NetworkLayer.shared
-        DispatchQueue.global().async {
-            guard let urlRequest = request.request else {
-                let err = NSError(domain: "", code: 500, description: "Cannot create URL Request with specified configurations")
-                instance.sendLog(message: err.localizedDescription, logType: .error(code: 900, name: err.localizedDescription))
-                DispatchQueue.main.async {
-                    var errorBody = S.init()
-                    errorBody.error = err
-                    completion(.failure(APIError(request: request, error: errorBody)))
-                }
-                return
+        guard let urlRequest = request.request else {
+            let err = NSError(domain: "", code: 500, description: "Cannot create URL Request with specified configurations")
+            instance.sendLog(message: err.localizedDescription, logType: .error(code: 900, name: err.localizedDescription))
+            DispatchQueue.main.async {
+                var errorBody = S.init()
+                errorBody.error = err
+                completion(.failure(APIError(request: request, error: errorBody)))
             }
-            
-            // create task and operation
-            let id = Int(Date().timeIntervalSince1970)
-            var operation: APIOperation!
-            var task: URLSessionDataTask!
+            return nil
+        }
+        
+        // create task and operation
+        let id = Int(Date().timeIntervalSince1970)
+        var operation: APIOperation!
+        var task: URLSessionDataTask!
+        
+        DispatchQueue.global().async {
             task = instance._urlSession.dataTask(with: urlRequest) { (data, response, error) in
                 guard operation != nil else { return }
                 
@@ -193,6 +194,8 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                 }
             })
         }
+        
+        return task
     }
     
     // MARK: Private Methods
