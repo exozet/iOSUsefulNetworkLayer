@@ -182,6 +182,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
     /// Requests given API configuration by using `NetworkLayer`.
     /// - Parameter completion: Completion block which contains error or success case.
     /// - Parameter response: Response `Enum` which has two cases, whether `error` or `success`.
+    @discardableResult
     public func request(completion: @escaping (_ response: NetworkLayer.Result<T,S>)->()) -> APITask? {
         var task: APITask?
         task = NetworkLayer.execute(self) { (result) in
