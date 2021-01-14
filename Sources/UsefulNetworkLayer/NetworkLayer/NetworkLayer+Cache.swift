@@ -36,13 +36,14 @@ extension NetworkLayer {
             self.initialize()
         }
         
-        #if !os(macOS)
+
         /**
          Initialize cache with the specified capacity preferences and path.
          - parameter memoryCapacity: The RAM demand. Set `0` if you don't want to use temporary memory
          - parameter diskCapacity: The storage demand. Set `0` if you don't want to save cache indefinitely
          - parameter diskPath: The path for the custom location in the storage to save
          */
+        #if !os(macOS)
         override init(memoryCapacity: Int, diskCapacity: Int, diskPath path: String?) {
             super.init(memoryCapacity: memoryCapacity, diskCapacity: diskCapacity, diskPath: path)
             self.initialize()
