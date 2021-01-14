@@ -36,14 +36,15 @@ extension NetworkLayer {
             self.initialize()
         }
         
-
+        // not for Mac Catalyst
+        // "The new required URLCache initializer init(memoryCapacity:diskCapacity:diskPath:) is currently unimplemented. (50739637)" from Known Issues in https://developer.apple.com/documentation/macos_release_notes/macos_10_15_beta_release_notes
+        #if !targetEnvironment(macCatalyst)
         /**
          Initialize cache with the specified capacity preferences and path.
          - parameter memoryCapacity: The RAM demand. Set `0` if you don't want to use temporary memory
          - parameter diskCapacity: The storage demand. Set `0` if you don't want to save cache indefinitely
          - parameter diskPath: The path for the custom location in the storage to save
          */
-        #if !os(macOS)
         override init(memoryCapacity: Int, diskCapacity: Int, diskPath path: String?) {
             super.init(memoryCapacity: memoryCapacity, diskCapacity: diskCapacity, diskPath: path)
             self.initialize()
