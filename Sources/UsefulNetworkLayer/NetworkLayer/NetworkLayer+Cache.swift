@@ -36,6 +36,7 @@ extension NetworkLayer {
             self.initialize()
         }
         
+        #if !os(macOS)
         /**
          Initialize cache with the specified capacity preferences and path.
          - parameter memoryCapacity: The RAM demand. Set `0` if you don't want to use temporary memory
@@ -46,6 +47,7 @@ extension NetworkLayer {
             super.init(memoryCapacity: memoryCapacity, diskCapacity: diskCapacity, diskPath: path)
             self.initialize()
         }
+        #endif
         
         /// Registers `NotificationCenter` for necessary messages.
         private func initialize() {
