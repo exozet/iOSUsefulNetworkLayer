@@ -76,15 +76,9 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
     /// Holds cache of the `NetworkLayer`.
     public var _cache: Cache? {
         get {
-            // not for Mac Catalyst
-            // "The new required URLCache initializer init(memoryCapacity:diskCapacity:diskPath:) is currently unimplemented. (50739637)" from Known Issues in https://developer.apple.com/documentation/macos_release_notes/macos_10_15_beta_release_notes
-            #if !targetEnvironment(macCatalyst)
             return NetworkLayer.Cache(memoryCapacity: 0,
                                       diskCapacity: 150 * 1024 * 1024,
                                       diskPath: nil)
-            #else
-            return NetworkLayer.Cache()
-            #endif
         }
     }
     
