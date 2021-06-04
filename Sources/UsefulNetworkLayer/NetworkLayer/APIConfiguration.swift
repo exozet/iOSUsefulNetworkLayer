@@ -57,6 +57,10 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
     
     /// The timeout value for the request wait time.
     public var timeOut: Int
+    
+    /// The date decoding strategy. Default is .defferedToDate
+    public var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy
+
         
     /**
      Initializes Configuration with the host URL and endpoint separately.
@@ -72,6 +76,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
      - parameter body: Request body for the API request.
      - parameter responseBodyObject: Type of the Response Object to create.
      - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
+     - parameter dateDecodingStrategy: The JSON date decoding strategy. Default is `.defferedToDate`
      Then specified custom caching will be applied for that request.
      */
     public init?(hostURL: String, endPoint: String,
@@ -84,7 +89,8 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
                  cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
                  isMainOperation: Bool = false,
                  autoCache: Bool = false,
-                 timeOut: Int = 30) {
+                 timeOut: Int = 30,
+                 dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .deferredToDate) {
         
         var url = URL(string: hostURL)
         url?.appendPathComponent(endPoint)
@@ -100,7 +106,8 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
                   cachingTime: cachingTime,
                   isMainOperation: isMainOperation,
                   autoCache: autoCache,
-                  timeOut: timeOut)
+                  timeOut: timeOut,
+                  dateDecodingStrategy: dateDecodingStrategy)
     }
     
     /**
@@ -115,6 +122,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
      - parameter body: Request body for the API request.
      - parameter responseBodyObject: Type of the Response Object to create.
      - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
+     - parameter dateDecodingStrategy: The JSON date decoding strategy. Default is `.defferedToDate`
      Then specified custom caching will be applied for that request.
      */
     public init(url: URL,
@@ -127,7 +135,8 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
                 cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
                 isMainOperation: Bool = false,
                 autoCache: Bool = false,
-                timeOut: Int = 30) {
+                timeOut: Int = 30,
+                dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .deferredToDate) {
         
         self.requestURL = url
         self.requestType = requestType
@@ -140,6 +149,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
         self.autoCache = autoCache
         self.timeOut = timeOut
         self.errorResponseBodyObject = errorType
+        self.dateDecodingStrategy = dateDecodingStrategy
     }
     
     /// Tries to create URL request by specified parameters.
@@ -204,6 +214,7 @@ public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPI
      - parameter body: Request body for the API request.
      - parameter responseBodyObject: Type of the Response Object to create.
      - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
+     - parameter dateDecodingStrategy: The JSON date decoding strategy. Default is `.defferedToDate`
      Then specified custom caching will be applied for that request.
      */
     init?(hostURL: String, endPoint: String,
@@ -215,7 +226,8 @@ public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPI
           cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
           isMainOperation: Bool = false,
           autoCache: Bool = false,
-          timeOut: Int = 30) {
+          timeOut: Int = 30,
+          dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .deferredToDate) {
         
         self.init(hostURL: hostURL,
                   endPoint: endPoint,
@@ -228,7 +240,8 @@ public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPI
                   cachingTime: cachingTime,
                   isMainOperation: isMainOperation,
                   autoCache: autoCache,
-                  timeOut: timeOut)
+                  timeOut: timeOut,
+                  dateDecodingStrategy: dateDecodingStrategy)
     }
     
     /**
@@ -243,6 +256,7 @@ public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPI
      - parameter body: Request body for the API request.
      - parameter responseBodyObject: Type of the Response Object to create.
      - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
+     - parameter dateDecodingStrategy: The JSON date decoding strategy. Default is `.defferedToDate`
      Then specified custom caching will be applied for that request.
      */
     init(url: URL,
@@ -254,7 +268,8 @@ public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPI
          cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
          isMainOperation: Bool = false,
          autoCache: Bool = false,
-         timeOut: Int = 30) {
+         timeOut: Int = 30,
+         dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .deferredToDate) {
         
         self.init(url: url,
                   requestType: requestType,
@@ -266,6 +281,7 @@ public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPI
                   cachingTime: cachingTime,
                   isMainOperation: isMainOperation,
                   autoCache: autoCache,
-                  timeOut: timeOut)
+                  timeOut: timeOut,
+                  dateDecodingStrategy: dateDecodingStrategy)
     }
 }

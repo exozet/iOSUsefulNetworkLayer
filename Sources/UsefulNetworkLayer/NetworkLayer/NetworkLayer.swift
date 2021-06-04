@@ -233,7 +233,10 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         
         if !request.responseBodyObject.shouldUseCustomInitializer {
             do {
-                let jsonObject = try JSONDecoder().decode(request.responseBodyObject, from: data)
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = request.dateDecodingStrategy
+
+                let jsonObject = try decoder.decode(request.responseBodyObject, from: data)
                 
                 if request.autoCache, let cacheTiming = jsonObject.cachingEndsAt() {
                     self._cache?.storeResponse(response, data: data, for: dataTask, expiry: cacheTiming)
