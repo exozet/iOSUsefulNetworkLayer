@@ -85,6 +85,11 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
     /// `URLSession` manager for the `NetworkLayer`.
     public var _urlSession: URLSession!
     
+    /// If `true`, Network Layer will accept challenges, otherwise it will cancel authentication challenges.
+    ///
+    /// Defaults to `true`.
+    public var allowInvalidCertificates: Bool = true
+    
     /// Private initializer
     private override init() {
         self.mainQueue = OperationQueue()
@@ -332,6 +337,33 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         case info
         /// Logs with the code and name of the error
         case error(code: Int, name: String)
+    }
+    
+    public func urlSession(_ session: URLSession,
+                           didReceive challenge: URLAuthenticationChallenge,
+                           completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        checkChallenge(challenge, completionHandler: completionHandler)
+    }
+    
+    public func urlSession(_ session: URLSession,
+                           task: URLSessionTask,
+                           didReceive challenge: URLAuthenticationChallenge,
+                           completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        checkChallenge(challenge, completionHandler: completionHandler)
+    }
+    
+    private func checkChallenge(_ challenge: URLAuthenticationChallenge,
+                                completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        var disposition = URLSession.AuthChallengeDisposition.performDefaultHandling
+        var credentials: URLCredential? = nil
+        if allowInvalidCertificates {
+            if let trust = challenge.protectionSpace.serverTrust {
+                credentials = URLCredential(trust: trust)
+            }
+        } else {
+            disposition = .cancelAuthenticationChallenge
+        }
+        completionHandler(disposition, credentials)
     }
     
 }
