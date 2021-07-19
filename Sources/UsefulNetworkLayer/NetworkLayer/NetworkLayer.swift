@@ -88,7 +88,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
     /// If `true`, Network Layer will accept challenges, otherwise it will cancel authentication challenges.
     ///
     /// Defaults to `true`.
-    public var allowInvalidCertificates: Bool = true
+    static public var allowInvalidCertificates: Bool = true
     
     /// Private initializer
     private override init() {
@@ -356,7 +356,7 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                                 completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
         var disposition = URLSession.AuthChallengeDisposition.performDefaultHandling
         var credentials: URLCredential? = nil
-        if allowInvalidCertificates {
+        if NetworkLayer.allowInvalidCertificates {
             if let trust = challenge.protectionSpace.serverTrust {
                 credentials = URLCredential(trust: trust)
             }
