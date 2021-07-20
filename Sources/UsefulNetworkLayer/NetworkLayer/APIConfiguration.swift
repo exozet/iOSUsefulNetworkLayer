@@ -192,10 +192,37 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
     /// Requests given API configuration by using `NetworkLayer`.
     /// - Parameter completion: Completion block which contains error or success case.
     /// - Parameter response: Response `Enum` which has two cases, whether `error` or `success`.
-    public func request(completion: @escaping (_ response: NetworkLayer.Result<T,S>)->()) {
-        NetworkLayer.execute(self, completion: completion)
+    @discardableResult
+    public func request(completion: @escaping (_ response: NetworkLayer.Result<T,S>)->()) -> APITask? {
+        var task: APITask?
+        task = NetworkLayer.execute(self) { (result) in
+            if (task?.isCancelled ?? false) { return }
+            completion(result)
+        }?.createAPITask()
+        return task
     }
     
+}
+
+/// Operates to hold URL task after API is requested.
+public class APITask {
+    /// Cancels the operation. Completion block will not be called after task is being cancelled.
+    public func cancel() {
+        self.task?.cancel()
+    }
+    
+    private var task: URLSessionTask?
+    internal var isCancelled: Bool = false
+    
+    internal init(from task: URLSessionTask?) {
+        self.task = task
+    }
+}
+
+internal extension URLSessionTask {
+    func createAPITask() -> APITask {
+        return APITask(from: self)
+    }
 }
 
 public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPIError {

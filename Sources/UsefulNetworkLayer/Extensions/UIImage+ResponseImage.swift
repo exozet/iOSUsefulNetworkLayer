@@ -16,10 +16,10 @@ public extension UIImage {
     
     /// Returns immediately if image is available on the cache, otherwise requests from Network Layer and calls completion block.
     @discardableResult
-    class func fromURL(_ url: URL, completion: @escaping (_ image: UIImage?)->()) -> UIImage? {
+    class func fromURL(_ url: URL, completion: @escaping (_ image: UIImage?)->(), task taskCompletion: ((APITask?)->())? = nil) -> UIImage? {
         let api = APIConfiguration(url: url, responseBodyObject: ResponseImage.self, cachingTime: NetworkLayer.CachingTime(seconds: 60*60*24))
         
-        api.request { (result) in
+        let task = api.request { (result) in
             switch result {
             case .failure(_):
                 completion(nil)
@@ -31,6 +31,8 @@ public extension UIImage {
         if let img = UIImage.fromCache(url) {
             return img
         }
+        
+        taskCompletion?(task)
         return nil
     }
     
@@ -42,9 +44,9 @@ public extension UIImage {
     }
     
     /// Downloads image and saves to the cache for future uses.
-    class func download(_ url: URL) {
+    @discardableResult class func download(_ url: URL) -> APITask? {
         let api = APIConfiguration(url: url, responseBodyObject: ResponseImage.self, priority: .veryLow, isMainOperation: false)
-        api.request { (_) in }
+        return api.request { (_) in }
     }
     
 }
