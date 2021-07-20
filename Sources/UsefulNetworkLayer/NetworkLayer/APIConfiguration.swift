@@ -37,6 +37,9 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
     /// Request body for the API request.
     public var body: [String:Any]?
     
+    /// Raw Request body for the API request.
+    public var rawBody: Data?
+    
     /// The expected object type from the request.
     public var responseBodyObject: T.Type
     
@@ -83,6 +86,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
                  requestType: NetworkLayer.RequestType = .get,
                  headers: [String:String]? = nil,
                  body: [String:Any]? = nil,
+                 rawBody: Data? = nil,
                  responseBodyObject: T.Type,
                  errorType: S.Type,
                  priority: Operation.QueuePriority = Operation.QueuePriority.normal,
@@ -100,6 +104,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
                   requestType: requestType,
                   headers: headers,
                   body: body,
+                  rawBody: rawBody,
                   responseBodyObject: responseBodyObject,
                   errorType: errorType,
                   priority: priority,
@@ -129,6 +134,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
                 requestType: NetworkLayer.RequestType = .get,
                 headers: [String:String]? = nil,
                 body: [String:Any]? = nil,
+                rawBody: Data? = nil,
                 responseBodyObject: T.Type,
                 errorType: S.Type,
                 priority: Operation.QueuePriority = .normal,
@@ -150,6 +156,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
         self.timeOut = timeOut
         self.errorResponseBodyObject = errorType
         self.dateDecodingStrategy = dateDecodingStrategy
+        self.rawBody = rawBody
     }
     
     /// Tries to create URL request by specified parameters.
@@ -166,7 +173,10 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
         request.allHTTPHeaderFields = headers
         
         // if request body is present, set json header and body together
-        if let body = body {
+        if let rawBody = rawBody {
+            request.httpBody = rawBody
+        }
+        else if let body = body {
             do {
                 request.httpBody = try JSONSerialization.data(withJSONObject: body, options: .prettyPrinted)
                 request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -248,6 +258,7 @@ public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPI
           requestType: NetworkLayer.RequestType = .get,
           headers: [String:String]? = nil,
           body: [String:Any]? = nil,
+          rawBody: Data? = nil,
           responseBodyObject: T.Type,
           priority: Operation.QueuePriority = Operation.QueuePriority.normal,
           cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
@@ -261,6 +272,7 @@ public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPI
                   requestType: requestType,
                   headers: headers,
                   body: body,
+                  rawBody: rawBody,
                   responseBodyObject: responseBodyObject,
                   errorType: DefaultAPIError.self,
                   priority: priority,
@@ -290,6 +302,7 @@ public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPI
          requestType: NetworkLayer.RequestType = .get,
          headers: [String:String]? = nil,
          body: [String:Any]? = nil,
+         rawBody: Data? = nil,
          responseBodyObject: T.Type,
          priority: Operation.QueuePriority = .normal,
          cachingTime: NetworkLayer.CachingTime = NetworkLayer.CachingTime(seconds: 60 * 60),
@@ -302,6 +315,7 @@ public extension APIConfiguration where T: ResponseBodyParsable, S == DefaultAPI
                   requestType: requestType,
                   headers: headers,
                   body: body,
+                  rawBody: rawBody,
                   responseBodyObject: responseBodyObject,
                   errorType: DefaultAPIError.self,
                   priority: priority,
