@@ -179,7 +179,10 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
         else if let body = body {
             do {
                 request.httpBody = try JSONSerialization.data(withJSONObject: body, options: .prettyPrinted)
-                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                if !(request.allHTTPHeaderFields?.contains(where: { $0.key == "Content-Type"}) ?? false) {
+                    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+                }
+                
             } catch {
                 // error occurred
                 return nil
