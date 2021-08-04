@@ -100,6 +100,28 @@ extension NetworkLayer {
         case put = "PUT"
         /// delete type request
         case delete = "DELETE"
+        
+        case patch = "PATCH"
+        
+        case copy = "COPY"
+        
+        case head = "HEAD"
+        
+        case options = "OPTIONS"
+        
+        case link = "LINK"
+        
+        case unlink = "UNLINK"
+        
+        case purge = "PURGE"
+        
+        case lock = "LOCK"
+        
+        case unlock = "UNLOCK"
+        
+        case propfind = "PROPFIND"
+        
+        case view = "VIEW"
     }
     
 }
