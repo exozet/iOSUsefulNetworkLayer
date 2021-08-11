@@ -90,7 +90,14 @@ public extension ErrorResponseParsable {
             return .customMessage(message)
         }
         else if let response = response {
-            return .http(response.0, (.init(rawValue: response.1) ?? .InternalServerError))
+            
+            var httpStatusCode : HTTPStatusCode = .InternalServerError
+            
+            if let responseStatusCode = HTTPStatusCode(rawValue: response.1) {
+                httpStatusCode = responseStatusCode
+            }
+            
+            return .http(response.0, httpStatusCode)
         }
         else if let error = error {
             return .system(error)
