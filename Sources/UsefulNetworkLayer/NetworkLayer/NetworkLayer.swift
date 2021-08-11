@@ -223,6 +223,8 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
                 self.sendLog(message: "Custom error message couldn't be created for Operation: \(operationId)", logType: .info)
             }
             self.sendLog(message: "HTTP Request failed with status \(statusCode) \(message)", logType: .error(code: statusCode, name: ""))
+            
+            message.response = (response, statusCode)
             DispatchQueue.main.async {
                 completion(.failure(.init(request: request, error: message)))
             }

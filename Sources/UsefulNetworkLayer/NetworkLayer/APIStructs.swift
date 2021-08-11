@@ -80,6 +80,31 @@ public protocol ErrorResponseParsable {
     var customMessage: T? { get set }
     var error: Error? { get set }
     init()
+    var reason: ErrorReason<T> { get }
+    var response: (URLResponse, Int)? { get set }
+}
+
+public extension ErrorResponseParsable {
+    var reason: ErrorReason<T> {
+        if let message = customMessage {
+            return .customMessage(message)
+        }
+        else if let response = response {
+            return .http(response.0, (.init(rawValue: response.1) ?? .InternalServerError))
+        }
+        else if let error = error {
+            return .system(error)
+        }
+        
+        let generic = NSError(domain: "NetworkLayer", code: 500, description: "Unhandled error")
+        return .system(generic)
+    }
+}
+
+public enum ErrorReason<T> where T: Codable {
+    case customMessage(T)
+    case http(URLResponse, HTTPStatusCode)
+    case system(Error)
 }
 
 /// Default type for the APIs to use if any error occurs in the operation.
@@ -87,6 +112,7 @@ public protocol ErrorResponseParsable {
 /// If any error occurs in the NetworkLayer independent from the API service, message will be carried
 /// over the `error`, otherwise `customMessage` will be initialized.
 public struct DefaultAPIError: ErrorResponseParsable {
+    public var response: (URLResponse, Int)?
     public init() { }
     public var customMessage: String?
     public var error: Error?
