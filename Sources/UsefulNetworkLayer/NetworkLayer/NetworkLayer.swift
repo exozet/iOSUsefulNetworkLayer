@@ -138,6 +138,8 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         var operation: APIOperation!
         var task: URLSessionDataTask!
         
+        instance._urlSession.configuration.httpAdditionalHeaders = request.httpHeaders
+        
         DispatchQueue.global().async {
             task = instance._urlSession.dataTask(with: urlRequest) { (data, response, error) in
                 guard operation != nil else { return }

@@ -63,6 +63,10 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
     
     /// The date decoding strategy. Default is .defferedToDate
     public var dateDecodingStrategy: JSONDecoder.DateDecodingStrategy
+    
+    /// HTTP Headers, iOS is using default headers for each HTTP request, e.g. the User-Agent. Use this to override them
+    public var httpHeaders : [String: String]?
+
 
         
     /**
@@ -80,6 +84,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
      - parameter responseBodyObject: Type of the Response Object to create.
      - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
      - parameter dateDecodingStrategy: The JSON date decoding strategy. Default is `.defferedToDate`
+     - parameter httpHeaders:  iOS is using default headers for each HTTP request, e.g. the User-Agent. Use this to override them
      Then specified custom caching will be applied for that request.
      */
     public init?(hostURL: String, endPoint: String,
@@ -94,7 +99,8 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
                  isMainOperation: Bool = false,
                  autoCache: Bool = false,
                  timeOut: Int = 30,
-                 dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .deferredToDate) {
+                 dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .deferredToDate,
+                 httpHeaders: [String:String]? = nil) {
         
         var url = URL(string: hostURL)
         url?.appendPathComponent(endPoint)
@@ -112,7 +118,8 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
                   isMainOperation: isMainOperation,
                   autoCache: autoCache,
                   timeOut: timeOut,
-                  dateDecodingStrategy: dateDecodingStrategy)
+                  dateDecodingStrategy: dateDecodingStrategy,
+                  httpHeaders: httpHeaders)
     }
     
     /**
@@ -128,6 +135,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
      - parameter responseBodyObject: Type of the Response Object to create.
      - parameter autoCache: To use that, override `cachingEndsAt:` method of Response Body Object.
      - parameter dateDecodingStrategy: The JSON date decoding strategy. Default is `.defferedToDate`
+     - parameter httpHeaders:  iOS is using default headers for each HTTP request, e.g. the User-Agent. Use this to override them
      Then specified custom caching will be applied for that request.
      */
     public init(url: URL,
@@ -142,7 +150,8 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
                 isMainOperation: Bool = false,
                 autoCache: Bool = false,
                 timeOut: Int = 30,
-                dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .deferredToDate) {
+                dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = .deferredToDate,
+                httpHeaders: [String:String]? = nil) {
         
         self.requestURL = url
         self.requestType = requestType
@@ -157,6 +166,7 @@ public struct APIConfiguration<T,S> where T: ResponseBodyParsable, S: ErrorRespo
         self.errorResponseBodyObject = errorType
         self.dateDecodingStrategy = dateDecodingStrategy
         self.rawBody = rawBody
+        self.httpHeaders = httpHeaders
     }
     
     /// Tries to create URL request by specified parameters.
