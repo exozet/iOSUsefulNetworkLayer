@@ -95,15 +95,10 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         self.mainQueue = OperationQueue()
         self.backgroundQueue = OperationQueue()
         super.init()
-        
-        let conf = URLSessionConfiguration.default
-        conf.requestCachePolicy = .reloadIgnoringCacheData
-        conf.urlCache = self._cache
-        
-        self._urlSession = URLSession.init(configuration: conf,
-                                          delegate: self,
-                                          delegateQueue: nil)
+
+        self._urlSession = self.createURLSession(httpHeaders: nil)
     }
+    
     
     /// Removes observers.
     deinit {
@@ -138,7 +133,11 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
         var operation: APIOperation!
         var task: URLSessionDataTask!
         
-        instance._urlSession.configuration.httpAdditionalHeaders = request.httpHeaders
+        
+        if let httpHeaders = request.httpHeaders {
+			// overriding the URLsession with new one which is using httpHeadres
+			instance._urlSession = instance.createURLSession(httpHeaders:httpHeaders)
+		}
         
         DispatchQueue.global().async {
             task = instance._urlSession.dataTask(with: urlRequest) { (data, response, error) in
@@ -206,6 +205,21 @@ public class NetworkLayer: NSObject, URLSessionDataDelegate {
     }
     
     // MARK: Private Methods
+    
+    /// create the URLSession configuration
+    /// - parameter httpHeaders:  iOS is using default headers for each HTTP request, e.g. the User-Agent. Use this to override them
+    /// - returns `URLSession`
+    private func createURLSession(httpHeaders: [String:String]? = nil) -> URLSession {
+		let conf = URLSessionConfiguration.default
+        conf.requestCachePolicy = .reloadIgnoringCacheData
+        conf.urlCache = self._cache
+        conf.httpAdditionalHeaders = httpHeaders
+        
+        let session = URLSession.init(configuration: conf,
+                                          delegate: self,
+                                          delegateQueue: nil)
+        return session
+	}
     
     /// Proceeds the response and completes.
     private func proceedResponse<T,S>(response: URLResponse, data: Data,
